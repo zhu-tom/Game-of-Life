@@ -9,12 +9,16 @@ export default class Game extends Component {
             board: this.initializeBoard(50, 70),
             sim: true,
             mouseDown: false,
+            lastPos: {x: null, y: null},
+            numTicks: 0
         }
         this.canvas = React.createRef();
         this.tick = this.tick.bind(this);
         this.toggleSim = this.toggleSim.bind(this);
         this.handleClickCell = this.handleClickCell.bind(this);
         this.handleMouseOver = this.handleMouseOver.bind(this);
+        this.handleMouseDown = this.handleMouseDown.bind(this);
+        this.handleMouseUp = this.handleMouseUp.bind(this);
         this.timer = setInterval(this.tick, 100);
     }
 
@@ -29,40 +33,57 @@ export default class Game extends Component {
         return board;
     }
 
-    handleClickClear() {
+    stopSim() {
         clearInterval(this.timer);
+        this.setState({numTicks: 0});
+    }
+
+    handleClickClear() {
+        this.stopSim();
         this.setState({sim: false, board: Array.from({length: this.state.height}, ()=>Array.from({length: this.state.width}, ()=>false))});
     }
 
     handleClickReset() {
-        clearInterval(this.timer);
+        this.stopSim();
         this.setState({sim: false, board: this.initializeBoard(this.state.height, this.state.width)});
     }
 
     handleClickCell(event) {
-        let {clientX, clientY, target} = event;
-        let [top, left] = [target.offsetTop, target.offsetLeft];
-        clientX = Math.floor((clientX-left)/10);
-        clientY = Math.floor((clientY-top)/10);
+        const {x, y} = this.getMousePos(event);
         this.setState(prevState=>{
-            prevState.board[clientY][clientX] = !prevState.board[clientY][clientX];
+            prevState.board[y][x] = !prevState.board[y][x];
             return {board: prevState.board};
         });
     }
 
-    handleMouseOver(e) {
-        let event = e;
-        if (this.state.mouseDown === true) {
-            this.handleClickCell(event);
-        }
+    getMousePos(event) {
+        let {clientX, clientY} = event;
+        const {top, left} = this.canvas.current.getBoundingClientRect();
+        clientX = Math.floor((clientX-left)/10);
+        clientY = Math.floor((clientY-top)/10);
+        return {x: clientX, y: clientY};
     }
 
-    handleMouseDown() {
+    handleMouseOver(e) {
+        const event = e;
+        const {x, y} = this.getMousePos(event);
+        if (!(x === this.state.lastPos.x && y === this.state.lastPos.y)) {            
+            this.setState({lastPos: {x: x, y: y}});
+            if (this.state.mouseDown === true) {
+                this.handleClickCell(event);
+            }
+        }
+        
+    }
+
+    handleMouseDown(event) {
+        this.handleClickCell(event);
         this.setState({mouseDown: true});
     }
 
-    handleMouseUp() {
-        this.setState({mouseDown: false})
+    handleMouseUp(event) {
+        this.handleClickCell(event);
+        this.setState({mouseDown: false});
     }
 
     // printCells() {
@@ -70,7 +91,7 @@ export default class Game extends Component {
     // }
 
     tick() {
-        this.setState(prevState=>({board: prevState.board.map((row, i)=>row.map((col, j)=>{
+        this.setState(prevState=>({numTicks: this.state.numTicks + 1, board: prevState.board.map((row, i)=>row.map((col, j)=>{
             let neighbours = this.findNeighbours(i, j);
             if (col === true) {
                 return neighbours === 2 || neighbours === 3;
@@ -119,10 +140,20 @@ export default class Game extends Component {
     render() {
         return (
             <div>
-                <canvas ref={this.canvas} onClick={this.handleClickCell} width={this.state.width*10} height={this.state.height*10}/>
-                <button onClick={this.toggleSim}>{this.state.sim ? 'Pause':'Play'}</button>
-                <button onClick={()=>this.handleClickReset()}>Reset</button>
-                <button onClick={()=>this.handleClickClear()}>Clear</button>
+                <canvas 
+                    ref={this.canvas} 
+                    onMouseMove={this.handleMouseOver} 
+                    onClick={this.handleClickCell} 
+                    onMouseDown={this.handleMouseDown}
+                    onMouseUp={this.handleMouseUp}
+                    width={this.state.width*10} 
+                    height={this.state.height*10}/>
+                <div>
+                    <button onClick={this.toggleSim}>{this.state.sim ? 'Pause':'Play'}</button>
+                    <button onClick={()=>this.handleClickReset()}>Reset</button>
+                    <button onClick={()=>this.handleClickClear()}>Clear</button>
+                    <p>Simulations: {this.state.numTicks}</p>
+                </div>
             </div>
         );
     }
