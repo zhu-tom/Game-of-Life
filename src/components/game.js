@@ -140,6 +140,7 @@ export default class Game extends Component {
     render() {
         return (
             <div>
+                <h1>John Conway's Game of Life</h1>
                 <canvas 
                     ref={this.canvas} 
                     onMouseMove={this.handleMouseOver} 
