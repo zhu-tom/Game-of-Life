@@ -1,0 +1,1 @@
+{"version":3,"sources":["styles.css"],"names":[],"mappings":"AAAA,OACI,qBACJ,CAEA,SACI,qBACJ,CAEA,GACI,UAAW,CACX,WACJ,CAEA,MACI,wBACJ","file":"main.273124ad.chunk.css","sourcesContent":[".alive {\n    background-color: black;\n}\n\ntable, td {\n    border: 1px solid black;\n}\n\ntd {\n    width: 10px;\n    height: 10px;\n}\n\ntable {\n    border-collapse: collapse;\n}"]}
